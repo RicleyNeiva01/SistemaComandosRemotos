@@ -1,6 +1,9 @@
 package br.com.ifba.sistemaremoto.cliente;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Scanner;
 
@@ -13,64 +16,156 @@ public class Cliente {
 
         try (
                 Socket socket = new Socket(IP_SERVIDOR, PORTA);
+
                 BufferedReader entrada = new BufferedReader(
-                        new InputStreamReader(socket.getInputStream()));
+                        new InputStreamReader(socket.getInputStream())
+                );
+
                 PrintWriter saida = new PrintWriter(
-                        socket.getOutputStream(), true);
+                        socket.getOutputStream(), true
+                );
+
                 Scanner teclado = new Scanner(System.in)
         ) {
 
-            System.out.println("Conectado ao servidor!");
+            // ========================================
+            // CABEÇALHO
+            // ========================================
 
-            // Recebe a mensagem inicial do servidor
+            System.out.println();
+            System.out.println("========================================");
+            System.out.println("     SISTEMA DE COMANDOS REMOTOS");
+            System.out.println("========================================");
+            System.out.println();
+
+            // ========================================
+            // 1. RECEBE MENSAGEM DE BOAS-VINDAS
+            // ========================================
+
+            System.out.println(entrada.readLine());
             System.out.println(entrada.readLine());
 
-            // Recebe "Digite seu USUARIO:"
-            System.out.println(entrada.readLine());
+            // ========================================
+            // 2. USUÁRIO
+            // ========================================
 
-            // Digita e envia o usuário
+            System.out.print("Usuário: ");
             String usuario = teclado.nextLine();
+
             saida.println(usuario);
 
-            // Recebe "Digite sua SENHA:"
+            // ========================================
+            // 3. SENHA
+            // ========================================
+
             System.out.println(entrada.readLine());
 
-            // Digita e envia a senha
+            System.out.print("Senha: ");
             String senha = teclado.nextLine();
+
             saida.println(senha);
 
-            // Recebe a resposta da autenticação
-            String resposta = entrada.readLine();
-            System.out.println(resposta);
+            // ========================================
+            // 4. RESPOSTA DA AUTENTICAÇÃO
+            // ========================================
+
+            String respostaLogin = entrada.readLine();
+
+            System.out.println();
+            System.out.println(respostaLogin);
 
             // Se a autenticação falhar, encerra
-            if (resposta.startsWith("ERRO:")) {
+            if (respostaLogin == null
+                    || respostaLogin.startsWith("ERRO:")) {
+
+                System.out.println();
+                System.out.println("Conexão encerrada.");
+
                 return;
             }
 
-            // Loop para enviar mensagens/comandos
+            // ========================================
+            // 5. TERMINAL DE COMANDOS
+            // ========================================
+
+            System.out.println();
+            System.out.println("========================================");
+            System.out.println("        TERMINAL REMOTO");
+            System.out.println("========================================");
+            System.out.println();
+
             while (true) {
 
-                System.out.print("> ");
-                String mensagem = teclado.nextLine();
+                System.out.print("remoto> ");
 
-                // Cliente usa /exit, mas o servidor espera SAIR
-                if ("/exit".equalsIgnoreCase(mensagem.trim())) {
+                String comando = teclado.nextLine().trim();
+
+                // ====================================
+                // ENCERRAR CLIENTE
+                // ====================================
+
+                if ("/exit".equalsIgnoreCase(comando)) {
+
+                    // O servidor espera "SAIR"
                     saida.println("SAIR");
 
-                    System.out.println(entrada.readLine());
+                    // Lê a resposta do servidor
+                    lerResposta(entrada);
+
+                    System.out.println();
+                    System.out.println("Conexão encerrada.");
+
                     break;
                 }
 
-                // Envia mensagem para o servidor
-                saida.println(mensagem);
+                // ====================================
+                // NÃO ENVIA COMANDO VAZIO
+                // ====================================
 
-                // Mostra resposta do servidor
-                System.out.println(entrada.readLine());
+                if (comando.isEmpty()) {
+                    System.out.println("Digite um comando.");
+                    continue;
+                }
+
+                // ====================================
+                // ENVIA COMANDO AO SERVIDOR
+                // ====================================
+
+                saida.println(comando);
+
+                // ====================================
+                // RECEBE RESULTADO COMPLETO
+                // ====================================
+
+                lerResposta(entrada);
             }
 
         } catch (IOException e) {
-            System.err.println("Erro ao conectar ao servidor: " + e.getMessage());
+
+            System.err.println();
+            System.err.println(
+                    "Erro ao conectar ao servidor: "
+                            + e.getMessage()
+            );
+        }
+    }
+
+    /**
+     * Lê todas as linhas enviadas pelo servidor
+     * até encontrar o marcador FIM_RESPOSTA.
+     */
+    private static void lerResposta(BufferedReader entrada)
+            throws IOException {
+
+        String linha;
+
+        while ((linha = entrada.readLine()) != null) {
+
+            if ("FIM_RESPOSTA".equals(linha)) {
+                break;
+            }
+
+            System.out.println(linha);
         }
     }
 }
