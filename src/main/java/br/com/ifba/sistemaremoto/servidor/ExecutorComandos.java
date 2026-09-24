@@ -6,10 +6,21 @@ import java.io.InputStreamReader;
 
 public class ExecutorComandos {
 
+    // ARRAY COM OS COMANDOS BLOQUEADOS (Requisito Opcional)
+    private static final String[] COMANDOS_PROIBIDOS = {"rm ", "shutdown", "reboot", "mkfs", "mv "};
+
     public String executar(String comando) {
 
         if (comando == null || comando.trim().isEmpty()) {
             return "ERRO: Comando vazio.";
+        }
+
+        // FILTRO DE SEGURANÇA
+        String comandoMin = comando.toLowerCase();
+        for (String proibido : COMANDOS_PROIBIDOS) {
+            if (comandoMin.contains(proibido)) {
+                return "ERRO: Comando Negado (Política de Segurança).";
+            }
         }
 
         try {

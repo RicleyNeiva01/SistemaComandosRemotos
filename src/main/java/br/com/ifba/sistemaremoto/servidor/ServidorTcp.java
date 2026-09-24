@@ -2,6 +2,8 @@ package br.com.ifba.sistemaremoto.servidor;
 
 import java.io.*;
 import java.net.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 public class ServidorTcp {
 
@@ -121,6 +123,16 @@ public class ServidorTcp {
             );
 
             // ========================================
+            // CONFIGURAÇÃO DO LOG DA SESSÃO (Ponto Extra)
+            // ========================================
+            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            // Troca os pontos do IP por hifens para evitar problemas com nomes de arquivos no sistema operacional
+            String ipFormatado = enderecoCliente.replace(".", "-");
+            String arquivoLog = "log_cliente_" + ipFormatado + "_" + timestamp + ".txt";
+
+            System.out.println("Log da sessão será salvo em: " + arquivoLog);
+
+            // ========================================
             // 3. LOOP DE COMANDOS
             // ========================================
 
@@ -174,6 +186,18 @@ public class ServidorTcp {
                         executorComandos.executar(mensagem);
 
                 // ====================================
+                // SALVA NO ARQUIVO DE LOG
+                // ====================================
+
+                try (FileWriter logWriter = new FileWriter(arquivoLog, true)) {
+                    logWriter.write("Comando: " + mensagem + "\n");
+                    logWriter.write("Saída:\n" + resultado + "\n");
+                    logWriter.write("----------------------------------------\n");
+                } catch (IOException e) {
+                    System.err.println("Erro ao salvar no arquivo de log: " + e.getMessage());
+                }
+
+                // ====================================
                 // ENVIA RESULTADO PARA O CLIENTE
                 // ====================================
 
@@ -189,10 +213,8 @@ public class ServidorTcp {
 
                 // Exibe o resultado também no servidor
                 System.out.println(
-                        "Resultado do comando:"
+                        "Resultado do comando enviado ao cliente."
                 );
-
-                System.out.println(resultado);
 
                 System.out.println("----------------------------------------");
             }

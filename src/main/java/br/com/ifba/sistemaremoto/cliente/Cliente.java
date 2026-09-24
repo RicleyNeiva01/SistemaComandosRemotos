@@ -9,7 +9,7 @@ import java.util.Scanner;
 
 public class Cliente {
 
-    private static final String IP_SERVIDOR = "192.168.56.10";
+    private static final String IP_SERVIDOR = "192.168.10.1";
     private static final int PORTA = 9000;
 
     public static void main(String[] args) {

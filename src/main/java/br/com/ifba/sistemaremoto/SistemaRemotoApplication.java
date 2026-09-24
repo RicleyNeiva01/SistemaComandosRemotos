@@ -1,5 +1,6 @@
 package br.com.ifba.sistemaremoto;
 
+import br.com.ifba.sistemaremoto.servidor.ExecutorComandos;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
@@ -9,5 +10,6 @@ public class SistemaRemotoApplication {
     public static void main(String[] args) {
         SpringApplication.run(SistemaRemotoApplication.class, args);
     }
+
 
 }
