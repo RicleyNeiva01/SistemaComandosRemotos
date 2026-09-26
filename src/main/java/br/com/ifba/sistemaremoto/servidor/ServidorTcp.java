@@ -4,10 +4,9 @@ import java.io.*;
 import java.net.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Scanner;
 
 public class ServidorTcp {
-
-    private static final int PORTA = 9000;
 
     private static final Autenticacao servicoAutenticacao =
             new Autenticacao();
@@ -17,12 +16,31 @@ public class ServidorTcp {
 
     public static void main(String[] args) {
 
-        try (ServerSocket servidor = new ServerSocket(PORTA)) {
+        Scanner teclado = new Scanner(System.in);
+
+        // ========================================
+        // CONFIGURAÇÃO DO SERVIDOR
+        // ========================================
+
+        System.out.print("Digite o IP do servidor: ");
+        String ipServidor = teclado.nextLine();
+
+        System.out.print("Digite a porta do servidor: ");
+        int porta = Integer.parseInt(teclado.nextLine());
+
+        try (
+                ServerSocket servidor = new ServerSocket(
+                        porta,
+                        50,
+                        InetAddress.getByName(ipServidor)
+                )
+        ) {
 
             System.out.println("========================================");
             System.out.println("       SERVIDOR TCP INICIADO");
             System.out.println("========================================");
-            System.out.println("Porta: " + PORTA);
+            System.out.println("IP: " + ipServidor);
+            System.out.println("Porta: " + porta);
             System.out.println("Aguardando conexoes...");
             System.out.println();
 
@@ -39,6 +57,13 @@ public class ServidorTcp {
 
                 atenderCliente(cliente);
             }
+
+        } catch (NumberFormatException e) {
+
+            System.err.println();
+            System.err.println(
+                    "Erro: a porta deve ser um número."
+            );
 
         } catch (IOException e) {
 
@@ -125,12 +150,20 @@ public class ServidorTcp {
             // ========================================
             // CONFIGURAÇÃO DO LOG DA SESSÃO (Ponto Extra)
             // ========================================
-            String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            // Troca os pontos do IP por hifens para evitar problemas com nomes de arquivos no sistema operacional
-            String ipFormatado = enderecoCliente.replace(".", "-");
-            String arquivoLog = "log_cliente_" + ipFormatado + "_" + timestamp + ".txt";
 
-            System.out.println("Log da sessão será salvo em: " + arquivoLog);
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+
+            // Troca os pontos do IP por hifens
+            // para evitar problemas com nomes de arquivos
+            String ipFormatado = enderecoCliente.replace(".", "-");
+
+            String arquivoLog =
+                    "log_cliente_" + ipFormatado + "_" + timestamp + ".txt";
+
+            System.out.println(
+                    "Log da sessão será salvo em: " + arquivoLog
+            );
 
             // ========================================
             // 3. LOOP DE COMANDOS
@@ -144,8 +177,10 @@ public class ServidorTcp {
 
                 // Ignora mensagem vazia
                 if (mensagem.isEmpty()) {
+
                     saida.println("ERRO: Comando vazio.");
                     saida.println("FIM_RESPOSTA");
+
                     continue;
                 }
 
@@ -189,19 +224,37 @@ public class ServidorTcp {
                 // SALVA NO ARQUIVO DE LOG
                 // ====================================
 
-                try (FileWriter logWriter = new FileWriter(arquivoLog, true)) {
-                    logWriter.write("Comando: " + mensagem + "\n");
-                    logWriter.write("Saída:\n" + resultado + "\n");
-                    logWriter.write("----------------------------------------\n");
+                try (
+                        FileWriter logWriter =
+                                new FileWriter(arquivoLog, true)
+                ) {
+
+                    logWriter.write(
+                            "Comando: " + mensagem + "\n"
+                    );
+
+                    logWriter.write(
+                            "Saída:\n" + resultado + "\n"
+                    );
+
+                    logWriter.write(
+                            "----------------------------------------\n"
+                    );
+
                 } catch (IOException e) {
-                    System.err.println("Erro ao salvar no arquivo de log: " + e.getMessage());
+
+                    System.err.println(
+                            "Erro ao salvar no arquivo de log: "
+                                    + e.getMessage()
+                    );
                 }
 
                 // ====================================
                 // ENVIA RESULTADO PARA O CLIENTE
                 // ====================================
 
-                String[] linhas = resultado.split("\n", -1);
+                String[] linhas =
+                        resultado.split("\n", -1);
 
                 for (String linha : linhas) {
                     saida.println(linha);

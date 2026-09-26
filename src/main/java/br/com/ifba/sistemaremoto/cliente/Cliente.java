@@ -9,13 +9,26 @@ import java.util.Scanner;
 
 public class Cliente {
 
-    private static final String IP_SERVIDOR = "192.168.10.1";
-    private static final int PORTA = 9000;
-
     public static void main(String[] args) {
 
+        // ========================================
+        // CONFIGURAÇÃO DA CONEXÃO
+        // ========================================
+
+        Scanner teclado = new Scanner(System.in);
+
+        System.out.print("Digite o IP do servidor: ");
+        String ipServidor = teclado.nextLine();
+
+        System.out.print("Digite a porta do servidor: ");
+        int porta = Integer.parseInt(teclado.nextLine());
+
+        // ========================================
+        // CONEXÃO COM O SERVIDOR
+        // ========================================
+
         try (
-                Socket socket = new Socket(IP_SERVIDOR, PORTA);
+                Socket socket = new Socket(ipServidor, porta);
 
                 BufferedReader entrada = new BufferedReader(
                         new InputStreamReader(socket.getInputStream())
@@ -23,9 +36,7 @@ public class Cliente {
 
                 PrintWriter saida = new PrintWriter(
                         socket.getOutputStream(), true
-                );
-
-                Scanner teclado = new Scanner(System.in)
+                )
         ) {
 
             // ========================================
@@ -139,6 +150,11 @@ public class Cliente {
 
                 lerResposta(entrada);
             }
+
+        } catch (NumberFormatException e) {
+
+            System.err.println();
+            System.err.println("Erro: a porta deve ser um número.");
 
         } catch (IOException e) {
 
