@@ -457,7 +457,7 @@ Segurança: comando bloqueado, caso apresentado.
 Código-fonte do projeto:
 
 GitHub:
-https://github.com/kauealecrim/SistemaComandosRemotos
+https://github.com/RicleyNeiva01/SistemaComandosRemotos.git
 
 👥 Autores
 
