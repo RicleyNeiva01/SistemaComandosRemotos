@@ -1,87 +1,179 @@
-Sistema de Comandos Remotos
+🖥️ Sistema de Comandos Remotos
 
-Sistema cliente/servidor desenvolvido em Java para simular uma sessão de
-terminal remoto utilizando Sockets TCP. O projeto foi desenvolvido
-como atividade da disciplina de Redes de Computadores, utilizando duas
-máquinas virtuais Debian no VirtualBox.
+Sistema Cliente/Servidor para execução controlada de comandos
+remotos utilizando Sockets TCP.
 
-1. Objetivo
+Projeto desenvolvido para a disciplina de Redes de Computadores, com
+o objetivo de aplicar conceitos de comunicação em rede, autenticação,
+gerenciamento de sessão, comunicação persistente e execução de processos
+no sistema operacional.
 
-O sistema permite que um cliente se conecte a um servidor por meio de
-uma conexão TCP, realize autenticação e, após o acesso ser autorizado,
-envie comandos para serem executados no sistema operacional do servidor.
+📌 Sumário
 
-A saída dos comandos é enviada de volta ao cliente através do mesmo
-socket.
+🎯 Objetivo
 
-2. Tecnologias utilizadas
+🧰 Tecnologias
 
-Java
+🏗️ Arquitetura
 
-Maven
+🌐 Configuração da Rede
 
-Sockets TCP
+🔐 Autenticação
 
-Debian Linux
+⚙️ Como Executar
 
-VirtualBox
+💻 Funcionamento
 
-Git/GitHub
+🛡️ Controle de Comandos
 
-3. Arquitetura
+📁 Estrutura do Projeto
 
-O projeto utiliza a arquitetura Cliente/Servidor:
+🔨 Compilação
 
-+------------------+              TCP               +------------------+
-|     CLIENTE      | ----------------------------> |     SERVIDOR     |
-| 192.168.10.2     |          porta 9000           | 192.168.10.1     |
-|                  | <---------------------------- |                  |
-| Envia comandos   |        Saída dos comandos     | Executa comandos |
-+------------------+                               +------------------+
+✅ Requisitos Atendidos
 
-As máquinas virtuais utilizam uma rede interna do VirtualBox chamada
-internet.
+🎬 Demonstração
 
-4. Configuração das máquinas
+👥 Autores
 
-Servidor
+🎯 Objetivo
 
-Sistema: Debian
+O sistema simula uma sessão de terminal remoto.
 
-IP da rede interna: 192.168.10.1
+O cliente se conecta ao servidor através de uma conexão TCP, realiza
+a autenticação e, após o acesso ser autorizado, pode enviar comandos
+para execução no sistema operacional da máquina servidora.
 
-Porta TCP: 9000
+O resultado da execução é enviado de volta ao cliente através da mesma
+conexão.
 
-Cliente
+Fluxo principal
 
-Sistema: Debian
+┌───────────────┐        Socket TCP        ┌────────────────┐
+│    CLIENTE    │ ───────────────────────► │    SERVIDOR    │
+│ 192.168.10.2  │        Porta 9000        │ 192.168.10.1  │
+│               │ ◄─────────────────────── │                │
+│ Envia comando │       Retorna saída      │ Executa comando│
+└───────────────┘                          └────────────────┘
 
-IP da rede interna: 192.168.10.2
+🧰 Tecnologias
 
+Tecnologia            Utilização
+
+☕ Java           Desenvolvimento da aplicação
+🔌 Socket TCP     Comunicação entre cliente e servidor
+🐧 Debian Linux   Sistema operacional das VMs
+📦 Maven          Compilação e gerenciamento do projeto
+📦 VirtualBox     Criação das máquinas virtuais
+🐙 Git/GitHub     Versionamento e hospedagem do código
+
+🏗️ Arquitetura
+
+O projeto utiliza a arquitetura Cliente/Servidor.
+
+🖥️ Servidor
+
+O servidor:
+
+Abre a porta TCP 9000;
+
+Aguarda conexões;
+
+Solicita autenticação;
+
+Valida usuário e senha;
+
+Recebe comandos;
+
+Executa os comandos no sistema operacional;
+
+Envia a saída de volta ao cliente.
+
+💻 Cliente
+
+O cliente:
+
+Estabelece a conexão com o servidor;
+
+Envia as credenciais;
+
+Aguarda a autenticação;
+
+Exibe o terminal remoto;
+
+Envia comandos;
+
+Recebe e exibe os resultados;
+
+Permite encerrar a sessão.
+
+🌐 Configuração da Rede
+
+As máquinas virtuais foram configuradas no VirtualBox utilizando uma
+Rede Interna chamada:
+
+internet
+
+🖥️ Servidor
+
+Sistema: Debian Linux
+IP:      192.168.10.1
+Porta:   9000
+
+💻 Cliente
+
+Sistema: Debian Linux
+IP:      192.168.10.2
 Servidor: 192.168.10.1
+Porta:    9000
 
-Porta TCP: 9000
+Observação: os IPs da rede interna são configurados manualmente
+nas VMs e podem precisar ser configurados novamente após reiniciar as
+máquinas.
 
-5. Autenticação
+🔐 Autenticação
 
-O servidor exige autenticação antes de permitir a execução de comandos.
+A autenticação é obrigatória antes da execução de comandos.
 
-Credenciais utilizadas no projeto:
+Credenciais utilizadas
 
 Usuário: admin
-Senha: 1234
+Senha:   1234
 
-Caso a autenticação não seja realizada com sucesso, o cliente não recebe
-permissão para executar comandos.
+O fluxo é:
 
-6. Como executar
+Cliente
+   │
+   ├── Conecta ao servidor
+   │
+   ├── Envia usuário e senha
+   │
+   ▼
+Servidor
+   │
+   ├── Valida credenciais
+   │
+   ├── ❌ Inválidas → acesso negado
+   │
+   └── ✅ Válidas → acesso liberado
+   │
+   ▼
+Terminal Remoto
 
-6.1 Configurar o Servidor
+⚙️ Como Executar
 
-Na máquina virtual do servidor:
+1. 🖥️ Iniciar o Servidor
+
+Na VM Servidor1, abra o terminal e execute:
 
 su -
+
+Configure o IP da rede interna:
+
 ip addr add 192.168.10.1/24 dev enp0s8
+
+Configure a rota:
+
 ip route add 192.168.10.0/24 dev enp0s8
 
 Entre na pasta do projeto:
@@ -92,209 +184,282 @@ Inicie o servidor:
 
 java -cp target/classes br.com.ifba.sistemaremoto.servidor.ServidorTcp
 
-Ao iniciar corretamente, será exibido:
+Mensagem esperada:
 
 Servidor TCP iniciado
 
-Deixe o terminal do servidor aberto.
+⚠️ Mantenha o terminal do servidor aberto enquanto o cliente estiver
+utilizando o sistema.
 
-6.2 Configurar o Cliente
+2. 💻 Iniciar o Cliente
 
-Na máquina virtual do cliente:
+Na VM Cliente, abra o terminal:
 
 su -
+
+Configure o IP:
+
 ip addr add 192.168.10.2/24 dev enp0s8
+
+Configure a rota:
+
 ip route add 192.168.10.0/24 dev enp0s8
 
-Teste a comunicação com o servidor:
+Testar a comunicação
 
 ping -c 3 192.168.10.1
 
-Teste a porta TCP:
+O esperado é:
+
+3 packets transmitted, 3 received, 0% packet loss
+
+Testar a porta TCP
 
 nc -vz 192.168.10.1 9000
 
-O resultado esperado é:
+O resultado esperado contém:
 
 open
 
-Entre na pasta do projeto:
+Executar o cliente
 
 cd ~/SistemaComandosRemotos
-
-Execute o cliente:
-
 java -cp target/classes br.com.ifba.sistemaremoto.cliente.Cliente
 
-Informe:
+Informe as credenciais:
 
 Usuário: admin
 Senha: 1234
 
-Após a autenticação, será possível utilizar o terminal remoto.
+💻 Funcionamento
 
-7. Exemplo de utilização
+Após a autenticação, o cliente disponibiliza um terminal remoto.
 
-Após a autenticação:
+Exemplo
+
+remoto> echo teste
+
+teste
+Código de saída: 0
+
+O comando segue o seguinte caminho:
+
+1. Usuário digita o comando
+             ↓
+2. Cliente envia pelo Socket TCP
+             ↓
+3. Servidor recebe o comando
+             ↓
+4. Servidor executa no sistema operacional
+             ↓
+5. Servidor captura a saída
+             ↓
+6. Saída é enviada pelo Socket TCP
+             ↓
+7. Cliente exibe o resultado
+
+A conexão permanece aberta para permitir múltiplas operações de
+comando/resposta durante a mesma sessão.
+
+🛡️ Controle de Comandos
+
+Como funcionalidade adicional de segurança, o servidor possui uma
+filtragem para impedir a execução de determinados comandos considerados
+perigosos no contexto do projeto.
+
+Entre os padrões bloqueados estão:
+
+rm
+shutdown
+reboot
+mkfs
+mv
+
+Quando um comando bloqueado é identificado, ele não é executado e o
+sistema informa que a operação foi negada.
+
+Essa funcionalidade corresponde ao opcional de filtragem de
+comandos proposto na atividade.
+
+🚪 Encerramento da Sessão
+
+O cliente possui uma palavra-chave para solicitar o encerramento da
+conexão:
+
+/exit
+
+📁 Estrutura do Projeto
+
+SistemaComandosRemotos/
+│
+├── src/
+│   └── main/
+│       └── java/
+│           └── br/
+│               └── com/
+│                   └── ifba/
+│                       └── sistemaremoto/
+│                           │
+│                           ├── cliente/
+│                           │   └── Cliente.java
+│                           │
+│                           └── servidor/
+│                               ├── ServidorTcp.java
+│                               ├── Autenticacao.java
+│                               └── ExecutorComandos.java
+│
+├── target/
+├── pom.xml
+├── mvnw
+├── mvnw.cmd
+└── README.md
+
+📌 Principais classes
+
+Cliente.java - Conecta ao servidor; - Envia credenciais; - Envia
+comandos; - Recebe respostas; - Exibe os resultados.
+
+ServidorTcp.java - Abre o ServerSocket; - Aceita conexões; -
+Gerencia a sessão; - Realiza a autenticação; - Recebe e responde aos
+comandos.
+
+Autenticacao.java - Mantém e valida as credenciais permitidas.
+
+ExecutorComandos.java - Executa os comandos no sistema
+operacional; - Captura stdout e stderr; - Retorna o resultado e o
+código de saída; - Aplica a filtragem de comandos.
+
+🔨 Compilação
+
+O projeto utiliza Maven.
+
+Para limpar, compilar e gerar os arquivos da aplicação:
+
+./mvnw clean package
+
+Após a compilação, as classes ficam disponíveis em:
+
+target/classes
+
+Os comandos de execução utilizados são:
+
+Servidor
+
+java -cp target/classes br.com.ifba.sistemaremoto.servidor.ServidorTcp
+
+Cliente
+
+java -cp target/classes br.com.ifba.sistemaremoto.cliente.Cliente
+
+✅ Requisitos Atendidos
+
+Requisito                                     Status
+
+VirtualBox                                      ✅
+Debian Linux                                    ✅
+Cliente e servidor em VMs diferentes            ✅
+Cliente e servidor na mesma rede                ✅
+Comunicação TCP                                 ✅
+Autenticação obrigatória                        ✅
+Lista de usuários/senhas                        ✅
+Execução de comandos no servidor                ✅
+Retorno da saída para o cliente                 ✅
+Comunicação persistente durante a sessão        ✅
+Encerramento da conexão                         ✅
+Filtragem de comandos perigosos             ✅ Opcional
+Repositório Git                                 ✅
+README de execução                              ✅
+
+🎬 Demonstração
+
+Para apresentar o funcionamento do sistema, recomenda-se seguir esta
+ordem:
+
+1️⃣ Ambiente
+
+Mostrar as duas máquinas virtuais:
+
+Servidor1
+
+Cliente
+
+2️⃣ Rede
+
+Mostrar:
+
+IP do servidor: 192.168.10.1
+
+IP do cliente: 192.168.10.2
+
+ping funcionando
+
+3️⃣ Servidor
+
+Mostrar:
+
+Servidor TCP iniciado
+
+4️⃣ Conectividade TCP
+
+Mostrar:
+
+nc -vz 192.168.10.1 9000
+
+com resultado:
+
+open
+
+5️⃣ Autenticação
+
+Mostrar:
+
+Usuário: admin
+Senha: 1234
+
+e a mensagem de autenticação bem-sucedida.
+
+6️⃣ Execução remota
+
+Demonstrar:
 
 remoto> echo teste
 teste
 Código de saída: 0
 
-Nesse processo:
+7️⃣ Segurança
 
-O cliente recebe o comando digitado pelo usuário.
+Demonstrar, se desejado, um comando bloqueado pelo servidor.
 
-O comando é enviado pelo socket TCP.
+📸 Evidências da Demonstração
 
-O servidor recebe o comando.
+Os principais registros da apresentação são:
 
-O servidor executa o comando no sistema operacional.
+VirtualBox: Cliente e Servidor ligados;
 
-A saída gerada é enviada de volta pelo socket.
+Servidor: IP 192.168.10.1;
 
-O cliente exibe a resposta no terminal.
+Cliente: IP 192.168.10.2;
 
-8. Encerramento
+Ping: comunicação entre as VMs;
 
-A sessão pode ser encerrada utilizando a palavra-chave definida pelo
-cliente:
+Servidor TCP: serviço iniciado;
 
-/exit
+Porta 9000: conexão TCP disponível;
 
-9. Controle de comandos
+Autenticação: acesso autorizado;
 
-O servidor possui uma filtragem para impedir a execução de determinados
-comandos considerados perigosos no contexto do projeto.
+Comando remoto: comando executado e resultado retornado;
 
-Entre os comandos/padrões bloqueados estão:
+Segurança: comando bloqueado, caso apresentado.
 
-rm
-
-shutdown
-
-reboot
-
-mkfs
-
-mv
-
-Quando um comando bloqueado é identificado, o servidor retorna uma
-mensagem de comando negado em vez de executá-lo.
-
-10. Estrutura do projeto
-
-A aplicação é organizada em dois módulos principais:
-
-src/
-└── main/
-    └── java/
-        └── br/
-            └── com/
-                └── ifba/
-                    └── sistemaremoto/
-                        ├── servidor/
-                        │   ├── ServidorTcp
-                        │   ├── Autenticacao
-                        │   └── ExecutorComandos
-                        │
-                        └── cliente/
-                            └── Cliente
-
-Servidor
-
-O pacote do servidor é responsável por:
-
-abrir o ServerSocket;
-
-aceitar conexões;
-
-autenticar usuários;
-
-receber comandos;
-
-executar comandos no sistema operacional;
-
-enviar as respostas ao cliente.
-
-Cliente
-
-O cliente é responsável por:
-
-estabelecer a conexão TCP;
-
-enviar usuário e senha;
-
-enviar comandos;
-
-receber as respostas;
-
-exibir os resultados no terminal.
-
-11. Compilação
-
-O projeto utiliza Maven.
-
-Para compilar e gerar os arquivos da aplicação:
-
-./mvnw clean package
-
-Após a compilação, os arquivos compilados ficam disponíveis em:
-
-target/classes
-
-12. Requisitos atendidos
-
-O projeto contempla os principais requisitos da atividade:
-
-Utilização do VirtualBox
-
-Cliente e servidor em máquinas virtuais diferentes
-
-Debian Linux
-
-Cliente e servidor na mesma rede
-
-Comunicação utilizando TCP
-
-Autenticação obrigatória
-
-Execução de comandos no servidor
-
-Retorno da saída dos comandos para o cliente
-
-Comunicação persistente durante a sessão
-
-Encerramento da conexão
-
-Filtragem de comandos perigosos (funcionalidade opcional)
-
-13. Repositório
+🌐 Repositório
 
 Código-fonte do projeto:
 
-GitHub: https://github.com/kauealecrim/SistemaComandosRemotos
+GitHub:
+https://github.com/kauealecrim/SistemaComandosRemotos
 
-14. Demonstração
+👥 Autores
 
-Para demonstrar o funcionamento:
-
-Iniciar a VM do servidor.
-
-Configurar o IP 192.168.10.1.
-
-Iniciar o ServidorTcp.
-
-Iniciar a VM do cliente.
-
-Configurar o IP 192.168.10.2.
-
-Testar a comunicação com ping.
-
-Testar a porta 9000 com nc.
-
-Iniciar o Cliente.
-
-Realizar a autenticação.
-
-Executar um comando remoto, como echo teste.
+Projeto desenvolvido pelos alunos para a disciplina de Redes de
+Computadores.
