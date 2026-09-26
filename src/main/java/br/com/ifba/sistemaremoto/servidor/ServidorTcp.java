@@ -2,6 +2,10 @@ package br.com.ifba.sistemaremoto.servidor;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
@@ -44,7 +48,6 @@ public class ServidorTcp {
             System.out.println("Aguardando conexoes...");
             System.out.println();
 
-            // Mantém o servidor funcionando continuamente
             while (true) {
 
                 Socket cliente = servidor.accept();
@@ -52,7 +55,8 @@ public class ServidorTcp {
                 System.out.println("----------------------------------------");
                 System.out.println(
                         "Novo cliente conectado: "
-                                + cliente.getInetAddress().getHostAddress()
+                                + cliente.getInetAddress()
+                                .getHostAddress()
                 );
 
                 atenderCliente(cliente);
@@ -68,7 +72,8 @@ public class ServidorTcp {
         } catch (IOException e) {
 
             System.err.println(
-                    "Erro ao iniciar o servidor: " + e.getMessage()
+                    "Erro ao iniciar o servidor: "
+                            + e.getMessage()
             );
         }
     }
@@ -82,17 +87,23 @@ public class ServidorTcp {
         String enderecoCliente =
                 cliente.getInetAddress().getHostAddress();
 
+        BufferedWriter logWriter = null;
+
         try (
                 BufferedReader entrada =
                         new BufferedReader(
                                 new InputStreamReader(
-                                        cliente.getInputStream()
+                                        cliente.getInputStream(),
+                                        StandardCharsets.UTF_8
                                 )
                         );
 
                 PrintWriter saida =
                         new PrintWriter(
-                                cliente.getOutputStream(),
+                                new OutputStreamWriter(
+                                        cliente.getOutputStream(),
+                                        StandardCharsets.UTF_8
+                                ),
                                 true
                         )
         ) {
@@ -118,7 +129,10 @@ public class ServidorTcp {
                 return;
             }
 
-            // Verifica usuário e senha
+            // ========================================
+            // VERIFICA USUÁRIO E SENHA
+            // ========================================
+
             if (!servicoAutenticacao.autenticar(usuario, senha)) {
 
                 saida.println(
@@ -148,25 +162,70 @@ public class ServidorTcp {
             );
 
             // ========================================
-            // CONFIGURAÇÃO DO LOG DA SESSÃO (Ponto Extra)
+            // 3. CRIAÇÃO DO LOG DA SESSÃO
             // ========================================
 
-            String timestamp = LocalDateTime.now()
-                    .format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+            Path pastaLogs =
+                    Paths.get("logs");
 
-            // Troca os pontos do IP por hifens
-            // para evitar problemas com nomes de arquivos
-            String ipFormatado = enderecoCliente.replace(".", "-");
+            Files.createDirectories(pastaLogs);
 
-            String arquivoLog =
-                    "log_cliente_" + ipFormatado + "_" + timestamp + ".txt";
+            String timestamp =
+                    LocalDateTime.now()
+                            .format(
+                                    DateTimeFormatter.ofPattern(
+                                            "yyyyMMdd_HHmmss_SSS"
+                                    )
+                            );
+
+            String ipFormatado =
+                    enderecoCliente.replace(".", "-");
+
+            String nomeArquivo =
+                    "log_cliente_"
+                            + ipFormatado
+                            + "_"
+                            + timestamp
+                            + ".txt";
+
+            Path caminhoLog =
+                    pastaLogs.resolve(nomeArquivo);
+
+            logWriter =
+                    Files.newBufferedWriter(
+                            caminhoLog,
+                            StandardCharsets.UTF_8
+                    );
+
+            // Cabeçalho do log
+            logWriter.write("========================================");
+            logWriter.newLine();
+            logWriter.write("       LOG DE SESSAO REMOTA");
+            logWriter.newLine();
+            logWriter.write("========================================");
+            logWriter.newLine();
+            logWriter.write("Cliente: " + enderecoCliente);
+            logWriter.newLine();
+            logWriter.write("Usuario: " + usuario);
+            logWriter.newLine();
+            logWriter.write(
+                    "Inicio: "
+                            + LocalDateTime.now()
+            );
+            logWriter.newLine();
+            logWriter.write("========================================");
+            logWriter.newLine();
+            logWriter.newLine();
+
+            logWriter.flush();
 
             System.out.println(
-                    "Log da sessão será salvo em: " + arquivoLog
+                    "Log da sessão criado em: "
+                            + caminhoLog
             );
 
             // ========================================
-            // 3. LOOP DE COMANDOS
+            // 4. LOOP DE COMANDOS
             // ========================================
 
             String mensagem;
@@ -175,11 +234,23 @@ public class ServidorTcp {
 
                 mensagem = mensagem.trim();
 
-                // Ignora mensagem vazia
+                // ====================================
+                // COMANDO VAZIO
+                // ====================================
+
                 if (mensagem.isEmpty()) {
 
-                    saida.println("ERRO: Comando vazio.");
+                    String resultado =
+                            "ERRO: Comando vazio.";
+
+                    saida.println(resultado);
                     saida.println("FIM_RESPOSTA");
+
+                    registrarLog(
+                            logWriter,
+                            mensagem,
+                            resultado
+                    );
 
                     continue;
                 }
@@ -190,11 +261,17 @@ public class ServidorTcp {
 
                 if ("SAIR".equalsIgnoreCase(mensagem)) {
 
-                    saida.println(
-                            "Sessao encerrada pelo usuario."
-                    );
+                    String resultado =
+                            "Sessao encerrada pelo usuario.";
 
+                    saida.println(resultado);
                     saida.println("FIM_RESPOSTA");
+
+                    registrarLog(
+                            logWriter,
+                            "SAIR",
+                            resultado
+                    );
 
                     System.out.println(
                             "Usuario '" + usuario
@@ -214,40 +291,21 @@ public class ServidorTcp {
                 );
 
                 // ====================================
-                // EXECUTA O COMANDO
+                // EXECUTA / FILTRA O COMANDO
                 // ====================================
 
                 String resultado =
                         executorComandos.executar(mensagem);
 
                 // ====================================
-                // SALVA NO ARQUIVO DE LOG
+                // SALVA COMANDO E SAÍDA NO LOG
                 // ====================================
 
-                try (
-                        FileWriter logWriter =
-                                new FileWriter(arquivoLog, true)
-                ) {
-
-                    logWriter.write(
-                            "Comando: " + mensagem + "\n"
-                    );
-
-                    logWriter.write(
-                            "Saída:\n" + resultado + "\n"
-                    );
-
-                    logWriter.write(
-                            "----------------------------------------\n"
-                    );
-
-                } catch (IOException e) {
-
-                    System.err.println(
-                            "Erro ao salvar no arquivo de log: "
-                                    + e.getMessage()
-                    );
-                }
+                registrarLog(
+                        logWriter,
+                        mensagem,
+                        resultado
+                );
 
                 // ====================================
                 // ENVIA RESULTADO PARA O CLIENTE
@@ -257,14 +315,12 @@ public class ServidorTcp {
                         resultado.split("\n", -1);
 
                 for (String linha : linhas) {
+
                     saida.println(linha);
                 }
 
-                // Marcador que informa ao cliente
-                // que a resposta terminou
                 saida.println("FIM_RESPOSTA");
 
-                // Exibe o resultado também no servidor
                 System.out.println(
                         "Resultado do comando enviado ao cliente."
                 );
@@ -280,6 +336,36 @@ public class ServidorTcp {
             );
 
         } finally {
+
+            // ========================================
+            // FECHA O LOG
+            // ========================================
+
+            if (logWriter != null) {
+
+                try {
+
+                    logWriter.write("----------------------------------------");
+                    logWriter.newLine();
+                    logWriter.write(
+                            "Fim da sessão: "
+                                    + LocalDateTime.now()
+                    );
+                    logWriter.newLine();
+                    logWriter.close();
+
+                } catch (IOException e) {
+
+                    System.err.println(
+                            "Erro ao fechar arquivo de log: "
+                                    + e.getMessage()
+                    );
+                }
+            }
+
+            // ========================================
+            // FECHA A CONEXÃO
+            // ========================================
 
             try {
 
@@ -299,6 +385,58 @@ public class ServidorTcp {
                                 + e.getMessage()
                 );
             }
+        }
+    }
+
+    /**
+     * Registra o comando e sua saída no arquivo
+     * de log da sessão.
+     */
+    private static void registrarLog(
+            BufferedWriter logWriter,
+            String comando,
+            String resultado
+    ) {
+
+        if (logWriter == null) {
+            return;
+        }
+
+        try {
+
+            logWriter.write("========================================");
+            logWriter.newLine();
+
+            logWriter.write(
+                    "Data/Hora: "
+                            + LocalDateTime.now()
+            );
+            logWriter.newLine();
+
+            logWriter.write("Comando:");
+            logWriter.newLine();
+
+            logWriter.write(comando);
+            logWriter.newLine();
+
+            logWriter.newLine();
+
+            logWriter.write("Saída:");
+            logWriter.newLine();
+
+            logWriter.write(resultado);
+            logWriter.newLine();
+
+            logWriter.newLine();
+
+            logWriter.flush();
+
+        } catch (IOException e) {
+
+            System.err.println(
+                    "Erro ao salvar no arquivo de log: "
+                            + e.getMessage()
+            );
         }
     }
 }
